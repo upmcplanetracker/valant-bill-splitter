@@ -83,7 +83,7 @@ run.bat --dry-run
 
 Configuration
 -------------
-These values are defined at the top of `split_bills.py` and control where files are read from, where output is written, and how new bills are detected.
+These values are defined at the top of `split_bills.py` and control where files are read from, where output is written, and how new bills are detected.  You must edit the input and output directories directly in the py script before running this, and if you need to change directories you need to edit the py script to reflect those changes.
 
 ### INPUT\_DIR
 
@@ -112,8 +112,8 @@ If the directory does not exist, it will be created automatically. Each output f
 ### BILL\_START\_MARKER
 
 A text string that appears on the **first page of every patient bill**.
-When this text is detected, the script knows a new bill begins on that page.
-For Valant EHR, the correct value is:
+When this text is detected, the script knows a new bill begins on that page. This is setup to be case agnostic, so "ADDRESSEE:" and "Addressee:" and "addressee:" will all be found with the default setting.
+For Valant EHR, the default setting in the script is also the correct value:
 ADDRESSEE:
 
 If your PDF format differs or Valant changes their layout in the future, this value may need to be adjusted.
