@@ -9,8 +9,8 @@ from pypdf import PdfReader, PdfWriter
 # CONFIGURATION (DEFAULTS)
 # =========================
 
-INPUT_DIR = "input_pdfs"
-OUTPUT_DIR = "output_bills"
+INPUT_DIR = "change_to_your_pdf_input_directory"
+OUTPUT_DIR = "change_to_your_pdf_output_directory"
 BILL_START_MARKER = "ADDRESSEE:"
 
 # =========================
