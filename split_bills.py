@@ -27,8 +27,13 @@ def extract_patient_name(text: str) -> str:
     lines = [line.strip() for line in text.split("\n") if line.strip()]
 
     for i, line in enumerate(lines):
-        if BILL_START_MARKER in line:
-            after = line.split(BILL_START_MARKER, 1)[1].strip()
+        # Use lowercase for the search
+        if BILL_START_MARKER.lower() in line.lower():
+            # Find the split point regardless of case
+            marker_start = line.lower().find(BILL_START_MARKER.lower())
+            marker_end = marker_start + len(BILL_START_MARKER)
+            after = line[marker_end:].strip()
+            
             if after:
                 return after
             elif i + 1 < len(lines):
@@ -68,7 +73,7 @@ def process_pdf(file_path, dry_run):
     for page in reader.pages:
         text = page.extract_text() or ""
 
-        if BILL_START_MARKER in text:
+        if BILL_START_MARKER.lower() in text.lower():
             if current_writer:
                 save_bill(current_writer, current_patient, dry_run)
 
