@@ -1,6 +1,6 @@
 Valant EHR PDF Bill Splitter
 ============================
-Splits a single combined-patient billing PDF exported from Valant EHR into individual, patient-named billing PDFs.
+Splits a single or multiple combined-patient billing PDF exported from Valant EHR into individual bills named by patient.
 * * *
 
 Features
@@ -31,7 +31,6 @@ brew install python
 
 Download from https://www.python.org/downloads/  
 **Check “Add Python to PATH”**
-
 * * *
 
 Setup
@@ -53,7 +52,6 @@ venv\\Scripts\\Activate.ps1
 ### Install Dependencies
 
 pip install -r requirements.txt
-
 * * *
 
 Usage
@@ -81,7 +79,6 @@ python split\_bills.py --delete-originals
 
 run.bat --delete-originals
 run.bat --dry-run
-
 * * *
 
 Configuration
