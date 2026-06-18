@@ -1,26 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Valant EHR PDF Bill Splitter – Full Repository</title>
-<style>
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; max-width: 960px; margin: 0 auto; padding: 2rem; line-height: 1.6; color: #333; }
-  h1, h2, h3 { color: #1a1a1a; border-bottom: 1px solid #eee; padding-bottom: .3em; }
-  pre { background: #f5f5f5; border: 1px solid #ddd; padding: 1rem; overflow-x: auto; border-radius: 4px; }
-  code { font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace; font-size: .9em; }
-  .file-header { font-weight: bold; margin-top: 2rem; margin-bottom: 0.5rem; color: #000; }
-  hr { margin: 2rem 0; border: 0; border-top: 2px solid #ddd; }
-  details { margin: 1rem 0; }
-  summary { cursor: pointer; font-weight: bold; }
-  table { border-collapse: collapse; margin: 1rem 0; }
-  th, td { border: 1px solid #ccc; padding: .5rem .8rem; text-align: left; }
-  th { background: #f0f0f0; }
-  .note { background: #fff9e6; border-left: 4px solid #ffd54f; padding: .8rem; margin: 1rem 0; }
-</style>
-</head>
-<body>
-
 <h1>Valant EHR PDF Bill Splitter – Complete Source &amp; Documentation</h1>
 
 <p>
