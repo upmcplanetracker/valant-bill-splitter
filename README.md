@@ -93,6 +93,10 @@ When `--delete-originals` is used, each input PDF is moved to a `processed/` sub
 
 Use the provided launcher scripts – they automatically activate the virtual environment and pass any arguments to `split_bills.py`.
 
+**Make the launcher executable (Linux/macOS only):**
+
+    chmod +x run.sh
+
 *   **Linux / macOS:**
     
         ./run.sh --dry-run
@@ -251,4 +255,4 @@ This tool is **not** affiliated with or endorsed by Valant EHR. It is an indepen
 
 * * *
 
-Save this page as `README.html` to view it offline.
+Save this page as `README.html` to view it offline, or copy the content directly into your repository's `README.md`.
