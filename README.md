@@ -196,29 +196,17 @@ Troubleshooting
 FAQ
 ---
 
-**Can I process multiple PDFs at once?**
+**Can I process multiple PDFs at once?** Yes. All matching PDF files found in `INPUT_DIR` are processed sequentially.
 
-Yes. All matching PDF files found in `INPUT_DIR` are processed sequentially.
+**Does this tool send any data over the internet?** No. Everything runs offline on your machine.
 
-**Does this tool send any data over the internet?**
+**What if a patient has more than one bill in the same PDF?** Each time `ADDRESSEE:` appears, a new bill is started. Multiple bills for the same patient will generate separate files (with duplication counters if the exact same filename would occur).
 
-No. Everything runs offline on your machine.
+**Is the aging bucket based on today’s date or the export date?** Today’s date (the moment you run the script) and the date of service. If you need a different reference date, modify the `today` variable in `calculate_days_overdue()`.
 
-**What if a patient has more than one bill in the same PDF?**
+**Can I change the aging buckets?** Absolutely. Edit the thresholds inside `calculate_days_overdue()` – the logic is straightforward.
 
-Each time `ADDRESSEE:` appears, a new bill is started. Multiple bills for the same patient will generate separate files (with duplication counters if the exact same filename would occur).
-
-**Is the aging bucket based on today’s date or the export date?**
-
-Today’s date (the moment you run the script). If you need a different reference date, modify the `today` variable in `calculate_days_overdue()`.
-
-**Can I change the aging buckets?**
-
-Absolutely. Edit the thresholds inside `calculate_days_overdue()` – the logic is straightforward.
-
-**Do I have to name my PDFs in a special way?**
-
-Yes. The script only processes files matching the Valant Statements export pattern: `Statements_YYYYMMDD_HHMMSS_NNNN.pdf`. This prevents accidentally splitting the wrong PDFs. If your exports have a different name, adjust `PDF_NAME_PATTERN` in the script.
+**Do I have to name my PDFs in a special way?** Yes. The script only processes files matching the Valant Statements export pattern: `Statements_YYYYMMDD_HHMMSS_NNNN.pdf`. This prevents accidentally splitting the wrong PDFs. If your exports have a different name, adjust `PDF_NAME_PATTERN` in the script.
 
 * * *
 
