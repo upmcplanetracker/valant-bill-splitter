@@ -15,9 +15,11 @@ INPUT_DIR = "change_to_your_pdf_input_directory"
 OUTPUT_DIR = "change_to_your_pdf_output_directory"
 BILL_START_MARKER = "ADDRESSEE:"
 
-# Subdirectories for processed and failed originals
+# Only process PDFs whose filenames match this pattern (Valant Statements export)
+PDF_NAME_PATTERN = re.compile(r'Statements_\d{8}_\d{6}_\d{4}\.pdf$')
+
+# Subdirectory for successfully processed originals (only used with --delete-originals)
 PROCESSED_DIR = os.path.join(INPUT_DIR, "processed")
-FAILED_DIR = os.path.join(INPUT_DIR, "failed")
 
 # =========================
 # HELPERS
@@ -92,30 +94,37 @@ def extract_patient_name(text: str) -> str:
     return "Unknown_Patient"
 
 
-def save_bill(writer, patient_name, dry_run):
-    """Save a single patient's bill with date and bucket in filename."""
-    full_text = ""
-    # We can't easily get the full text here without passing it around.
-    # Instead, we'll accumulate text per patient bill in process_pdf.
-    # For now, this function receives the bucket from outside.
-    # (We'll modify process_pdf to pass bucket)
+def _save_bill(writer, patient_name, bucket, dry_run):
+    """Write the PDF with proper naming, or print dry-run message."""
     safe_name = clean_filename(patient_name)
     date_str = datetime.now().strftime("%-m-%-d-%Y")
 
-    # bucket will be added by caller
-    bucket_str = ""  # placeholder, will be overridden by actual call
-    # This function will be updated to accept bucket as a parameter.
+    bucket_str = f" - {bucket}" if bucket else ""
+    filename = f"{safe_name} - {date_str}{bucket_str}.pdf"
+    output_path = os.path.join(OUTPUT_DIR, filename)
 
-    # We'll actually change the signature to include bucket.
-    # Let's rewrite this properly.
-    return  # temporary to avoid confusion, will replace with full version
+    # Handle duplicate filenames
+    counter = 1
+    base_path = output_path
+    while os.path.exists(output_path):
+        output_path = base_path.replace(".pdf", f"_{counter}.pdf")
+        counter += 1
+
+    if dry_run:
+        print(f"  [DRY-RUN] Would save: {os.path.basename(output_path)}")
+        return
+
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    with open(output_path, "wb") as f:
+        writer.write(f)
+    print(f"  -> Saved: {os.path.basename(output_path)}")
 
 
 # =========================
 # PROCESSING
 # =========================
 
-def process_pdf(file_path, dry_run, delete_originals):
+def process_pdf(file_path, dry_run):
     print(f"\nProcessing: {os.path.basename(file_path)}")
 
     reader = PdfReader(file_path)
@@ -148,32 +157,6 @@ def process_pdf(file_path, dry_run, delete_originals):
         _save_bill(current_writer, current_patient, bucket, dry_run)
 
 
-def _save_bill(writer, patient_name, bucket, dry_run):
-    """Internal: write the PDF with proper naming, or print dry-run message."""
-    safe_name = clean_filename(patient_name)
-    date_str = datetime.now().strftime("%-m-%-d-%Y")
-
-    bucket_str = f" - {bucket}" if bucket else ""
-    filename = f"{safe_name} - {date_str}{bucket_str}.pdf"
-    output_path = os.path.join(OUTPUT_DIR, filename)
-
-    # Handle duplicates
-    counter = 1
-    base_path = output_path
-    while os.path.exists(output_path):
-        output_path = base_path.replace(".pdf", f"_{counter}.pdf")
-        counter += 1
-
-    if dry_run:
-        print(f"  [DRY-RUN] Would save: {os.path.basename(output_path)}")
-        return
-
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-    with open(output_path, "wb") as f:
-        writer.write(f)
-    print(f"  -> Saved: {os.path.basename(output_path)}")
-
-
 # =========================
 # MAIN
 # =========================
@@ -192,7 +175,7 @@ def main():
     parser.add_argument(
         "--delete-originals",
         action="store_true",
-        help="Move original PDFs to 'processed/' after successful splitting, or 'failed/' if an error occurs"
+        help="Move original PDFs to 'processed/' after successful splitting (originals are never removed on error)"
     )
 
     args = parser.parse_args()
@@ -201,28 +184,26 @@ def main():
         print(f"ERROR: Input directory '{INPUT_DIR}' does not exist.")
         return
 
+    # Gather PDFs and filter by Valant naming pattern
     pdfs = [f for f in os.listdir(INPUT_DIR) if f.lower().endswith(".pdf")]
+    pdfs = [f for f in pdfs if PDF_NAME_PATTERN.match(f)]
 
     if not pdfs:
-        print("No PDF files found in input directory.")
+        print("No matching PDF files found (expected pattern: Statements_YYYYMMDD_HHMMSS_NNNN.pdf).")
         return
 
-    # Create subdirectories if needed
+    # Create processed folder if we might move files there
     if not args.dry_run and args.delete_originals:
         os.makedirs(PROCESSED_DIR, exist_ok=True)
-        os.makedirs(FAILED_DIR, exist_ok=True)
 
     for pdf in pdfs:
         full_path = os.path.join(INPUT_DIR, pdf)
         try:
-            process_pdf(full_path, args.dry_run, args.delete_originals)
+            process_pdf(full_path, args.dry_run)
         except Exception as e:
             print(f"ERROR processing {pdf}: {e}")
-            if not args.dry_run and args.delete_originals:
-                shutil.move(full_path, os.path.join(FAILED_DIR, pdf))
-                print(f"  !! Moved to failed/: {pdf}")
+            # Leave the original untouched – do NOT move/delete
         else:
-            # Successful processing
             if args.delete_originals and not args.dry_run:
                 shutil.move(full_path, os.path.join(PROCESSED_DIR, pdf))
                 print(f"  !! Moved to processed/: {pdf}")
