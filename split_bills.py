@@ -7,23 +7,13 @@ import argparse
 from datetime import datetime
 from pypdf import PdfReader, PdfWriter
 
-# =========================
-# CONFIGURATION (DEFAULTS)
-# =========================
-
 INPUT_DIR = "change_to_your_pdf_input_directory"
 OUTPUT_DIR = "change_to_your_pdf_output_directory"
 BILL_START_MARKER = "ADDRESSEE:"
 
-# Only process PDFs whose filenames match this pattern (Valant Statements export)
 PDF_NAME_PATTERN = re.compile(r'Statements_\d{8}_\d{6}_\d{4}\.pdf$')
 
-# Subdirectory for successfully processed originals (only used with --delete-originals)
 PROCESSED_DIR = os.path.join(INPUT_DIR, "processed")
-
-# =========================
-# HELPERS
-# =========================
 
 def clean_filename(name: str) -> str:
     """Remove illegal characters and extra whitespace."""
@@ -38,7 +28,6 @@ def calculate_days_overdue(text: str):
     Returns an aging bucket string: '0-30', '31-60', '61-90', '90+'
     or None if no date could be determined.
     """
-    # Look for the block between 'Date Ref' and '0-30 Days'
     start_match = re.search(r'Date\s+Ref', text)
     end_match = re.search(r'0-30 Days', text)
 
@@ -47,8 +36,6 @@ def calculate_days_overdue(text: str):
     else:
         table_text = text
 
-    # Extract dates followed by a reference number (3-6 digits).
-    # Accept 1- or 2-digit months/days.
     pattern = r'(\d{1,2}/\d{1,2}/\d{4})\s+\d{3,6}'
     matches = re.findall(pattern, table_text)
 
@@ -59,7 +46,6 @@ def calculate_days_overdue(text: str):
     today = datetime.now()
     delta = (today - service_date).days
 
-    # Standard medical-billing aging buckets
     if delta >= 90:
         return "90+"
     elif delta >= 61:
@@ -76,7 +62,6 @@ def extract_patient_name(text: str) -> str:
 
     for i, line in enumerate(lines):
         if BILL_START_MARKER.lower() in line.lower():
-            # Find the split point regardless of case
             marker_start = line.lower().find(BILL_START_MARKER.lower())
             marker_end = marker_start + len(BILL_START_MARKER)
             after = line[marker_end:].strip()
@@ -85,9 +70,7 @@ def extract_patient_name(text: str) -> str:
                 return after
             elif i + 1 < len(lines):
                 next_line = lines[i + 1]
-                # If next line starts with a number, it's probably an address
                 if re.match(r'^\d+\s', next_line):
-                    # Take only the part before the first comma (the name portion)
                     return next_line.split(',')[0].strip()
                 return next_line
 
@@ -103,7 +86,6 @@ def _save_bill(writer, patient_name, bucket, dry_run):
     filename = f"{safe_name} - {date_str}{bucket_str}.pdf"
     output_path = os.path.join(OUTPUT_DIR, filename)
 
-    # Handle duplicate filenames
     counter = 1
     base_path = output_path
     while os.path.exists(output_path):
@@ -120,10 +102,6 @@ def _save_bill(writer, patient_name, bucket, dry_run):
     print(f"  -> Saved: {os.path.basename(output_path)}")
 
 
-# =========================
-# PROCESSING
-# =========================
-
 def process_pdf(file_path, dry_run):
     print(f"\nProcessing: {os.path.basename(file_path)}")
 
@@ -136,12 +114,10 @@ def process_pdf(file_path, dry_run):
         text = page.extract_text() or ""
 
         if BILL_START_MARKER.lower() in text.lower():
-            # Save previous patient bill (if any)
             if current_writer:
                 bucket = calculate_days_overdue(current_full_text)
                 _save_bill(current_writer, current_patient, bucket, dry_run)
 
-            # Start new patient
             current_writer = PdfWriter()
             current_writer.add_page(page)
             current_patient = extract_patient_name(text)
@@ -151,15 +127,10 @@ def process_pdf(file_path, dry_run):
                 current_writer.add_page(page)
                 current_full_text += text
 
-    # Save the last patient
     if current_writer:
         bucket = calculate_days_overdue(current_full_text)
         _save_bill(current_writer, current_patient, bucket, dry_run)
 
-
-# =========================
-# MAIN
-# =========================
 
 def main():
     parser = argparse.ArgumentParser(
@@ -184,7 +155,6 @@ def main():
         print(f"ERROR: Input directory '{INPUT_DIR}' does not exist.")
         return
 
-    # Gather PDFs and filter by Valant naming pattern
     pdfs = [f for f in os.listdir(INPUT_DIR) if f.lower().endswith(".pdf")]
     pdfs = [f for f in pdfs if PDF_NAME_PATTERN.match(f)]
 
@@ -192,7 +162,6 @@ def main():
         print("No matching PDF files found (expected pattern: Statements_YYYYMMDD_HHMMSS_NNNN.pdf).")
         return
 
-    # Create processed folder if we might move files there
     if not args.dry_run and args.delete_originals:
         os.makedirs(PROCESSED_DIR, exist_ok=True)
 
@@ -202,7 +171,6 @@ def main():
             process_pdf(full_path, args.dry_run)
         except Exception as e:
             print(f"ERROR processing {pdf}: {e}")
-            # Leave the original untouched – do NOT move/delete
         else:
             if args.delete_originals and not args.dry_run:
                 shutil.move(full_path, os.path.join(PROCESSED_DIR, pdf))
